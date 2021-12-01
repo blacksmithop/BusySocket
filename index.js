@@ -97,8 +97,12 @@ io.on('connection', (socket) => {
         });
     })
 
-    socket.on("private message", (anotherSocketId, msg) => {
-        socket.to(anotherSocketId).emit("private message", socket.id, msg);
+    socket.on("send private message", (data) => {
+        console.log(data);
+        socket.to(data.receiver).emit("private message",
+            {
+                msg: data.message, author: socket.id, user: socket.user, type: 'msg'
+            });
     });
 });
 
