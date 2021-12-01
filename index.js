@@ -5,6 +5,10 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 
+// Serve Static files
+const path = require('path')
+app.use('/static', express.static(path.join(__dirname, 'uploads')))
+
 // CORS
 const cors = require('cors');
 app.use(cors());
@@ -12,7 +16,8 @@ app.use(cors());
 // Import routes
 const login = require('./routes/login');
 app.use('/', login);
-
+const save = require('./routes/save');
+app.use('/', save);
 
 app.get('/', (req, res) => {
     res.status(200).send({
@@ -82,7 +87,14 @@ io.on('connection', (socket) => {
 
     socket.on('send message', (msg) => {
 
-        io.to(socket.room).emit("room message", { msg: msg, author: socket.id, user: socket.user });
+        io.to(socket.room).emit("room message", { msg: msg, author: socket.id, user: socket.user, type: 'msg' });
+    })
+
+    socket.on('send image', (url) => {
+
+        io.to(socket.room).emit("room message", {
+            msg: url, author: socket.id, user: socket.user, type: 'image'
+        });
     })
 
     socket.on("private message", (anotherSocketId, msg) => {

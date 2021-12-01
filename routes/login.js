@@ -1,9 +1,6 @@
 const router = require('express').Router();
 const bodyParser = require('body-parser');
 
-// Multer: set dest + config here
-const multer = require('multer')
-
 // User schema
 const User = require('./schema/user');
 
@@ -12,12 +9,6 @@ const bcrypt = require('bcrypt');
 
 router.use(bodyParser.json());
 router.use(bodyParser.urlencoded({ extended: false }));
-
-const upload = multer({ dest: './uploads' })
-
-router.post('/upload', upload.single('image'), (req, res) => {
-    console.log(req.file);
-});
 
 // Login
 router.post('/login', function (req, res) {
