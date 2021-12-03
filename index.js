@@ -19,6 +19,9 @@ app.use('/', login);
 const save = require('./routes/save');
 app.use('/', save);
 
+// Message schema
+const Message = require('./routes/schema/message');
+
 app.get('/', (req, res) => {
     res.status(200).send({
         message: 'OK'
@@ -85,6 +88,14 @@ io.on('connection', (socket) => {
 
     })
 
+    socket.on('find user', (id) => {
+        socket.to(id).emit("request identity", socket.id);
+    })
+
+    socket.on('identify as', (data) => {
+        socket.to(data.id).emit("give identity", data);
+    })
+
     socket.on('send message', (msg) => {
 
         io.to(socket.room).emit("room message", { msg: msg, author: socket.id, user: socket.user, type: 'msg' });
@@ -97,12 +108,38 @@ io.on('connection', (socket) => {
         });
     })
 
+    socket.on("load chat history", (data) => {
+        const receiver = io.sockets.sockets.get(data);
+
+        Message.find({ from: socket.user.username, to: receiver.username }, function (err, chat) {
+            if (err) {
+                console.log("No previous chat history");
+            }
+            console.log(chat);
+
+        });
+    });
     socket.on("send private message", (data) => {
-        console.log(data);
+        console.log("Private chat ", socket.user.username);
         socket.to(data.receiver).emit("private message",
             {
                 msg: data.message, author: socket.id, user: socket.user, type: 'msg'
             });
+        //const receiver = io.sockets.sockets.get(data.receiver);
+        // Fetch to username
+
+        msg = {
+            body: data.message,
+            from: socket.user.username,
+            to: data.username,
+            time: Date(),
+            type: 'msg',
+            user: socket.user
+        }
+        saveMessage = new Message(msg);
+        saveMessage.save().then(function (resp) {
+            console.log("📥 Message saved");
+        });
     });
 });
 
